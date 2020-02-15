@@ -1,25 +1,29 @@
 package main
 
 import (
-	"encoding/json"
+	"log"
 	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	_ "github.com/heroku/x/hmetrics/onload"
 )
 
-type Person struct {
-	Name string
-}
-
 func main() {
-	http.HandleFunc("/", HelloServer)
-	http.ListenAndServe(":8080", nil)
-}
+	port := os.Getenv("PORT")
 
-func HelloServer(w http.ResponseWriter, r *http.Request) {
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
 
-	w.Header().Set("Content-Type", "application/json")
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.LoadHTMLGlob("templates/*.tmpl.html")
+	router.Static("/static", "static")
 
-	u := Person{Name: "US123"}
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.tmpl.html", nil)
+	})
 
-	json.NewEncoder(w).Encode(u)
-
+	router.Run(":" + port)
 }
